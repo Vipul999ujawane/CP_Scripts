@@ -92,7 +92,18 @@ case $key in
 esac
 done
 
+trap exit_script SIGINT SIGTERM
+
 file_empty
+
+function exit_script
+{
+  echo -e "${RED}${BOLD}SIGINT Received \t\t Exiting Script${NONE}"
+  rm ${FILE%.*} 2>/dev/null
+  rm tmp.* 2>/dev/null
+  rm -rf .vscode 2>/dev/null
+  exit
+}
 
 echo -e "${GREEN}FILE : ${FILE}"
 compile
@@ -107,5 +118,5 @@ echo -e "${BLUE}${BOLD}Running  ${FILE%.*}...${NONE}"
 ./${FILE%.*}
 echo -e "\n${RED}${BOLD}Removing ${FILE%.*}...${NONE}"
 rm ${FILE%.*}
-rm tmp.*
-rm -rf .vscode
+rm tmp.* 2>/dev/null
+rm -rf .vscode 2>/dev/null
