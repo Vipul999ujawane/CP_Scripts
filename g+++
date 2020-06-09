@@ -1,0 +1,111 @@
+#!/bin/bash
+
+
+GREEN="\e[32m"
+YELLOW="\e[33m"
+BOLD="\e[1m"
+NONE="\e[0m"
+BLUE="\e[34m"
+RED="\e[31m"
+
+function show_help
+{
+  echo -e "${GREEN}Example: g+++ file [-c][-h][-i ./in][-o ./out] ${NONE}"
+  echo -e "${YELLOW}\t\t-c | --check : Check Code ${NONE}"
+  echo -e "${YELLOW}\t\t-i | --in : Input File for Test${NONE}"
+  echo -e "${YELLOW}\t\t-h | --out : Output File for Test${NONE}"
+  echo -e "${YELLOW}\t\t-h | --help : This Message${NONE}"
+  exit
+}
+
+function file_empty
+{
+  if [[ -z "$FILE" ]]
+  then
+  show_help
+  fi
+}
+
+function check_code
+{
+  R=$(mktemp tmp.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX)
+  TMP="$R"
+    file_empty
+    echo -ne "${YELLOW}Checking Code....${NONE}"
+    ./${FILE%.*} < $IN > $TMP
+    DIFF=$(diff $OUT $TMP)
+    RES=$?
+    rm $TMP
+    rm ${FILE%.*}
+
+    if [[ $RES -eq "0" ]]
+    then
+    echo -e "${GREEN}${BOLD}\t\t[DONE]${NONE}"
+    echo -e "${GREEN}CODE TEST CORRECT${NONE}"
+    exit
+    fi
+
+    echo -e "${RED}${BOLD}\t\t[DONE]${NONE}"
+    echo -e "${RED}CODE TEST INCORRECT${RED}"
+    echo "${DIFF}" 
+    exit
+}
+
+function compile
+{
+  file_empty
+  echo -ne "${YELLOW}${BOLD}Compiling  $FILE...${NONE}"
+  g++ -w $FILE -o ${FILE%.*}
+  echo -e "${GREEN}${BOLD}\t\t[DONE]${NONE}"
+}
+
+POSITIONAL=()
+
+FILE=""
+IN="./in"
+OUT="./out"
+CHECK=""
+while [[ "$#" -gt 0 ]]; do
+key="$1"
+
+case $key in
+  -h|--help)
+  show_help
+  ;;
+  -c|--check)
+  CHECK="1"
+  shift
+  ;;
+  -i|--in)
+  IN=$2
+  shift 
+  shift
+  ;;
+  -o|--out)
+  OUT=$2
+  shift
+  shift
+  ;;
+  *)
+  FILE="$1"
+  shift
+esac
+done
+
+file_empty
+
+echo -e "${GREEN}FILE : ${FILE}"
+compile
+
+if [[ ! -z "$CHECK" ]]
+then 
+  check_code
+  exit
+fi
+
+echo -e "${BLUE}${BOLD}Running  ${FILE%.*}...${NONE}"
+./${FILE%.*}
+echo -e "\n${RED}${BOLD}Removing ${FILE%.*}...${NONE}"
+rm ${FILE%.*}
+rm tmp.*
+rm -rf .vscode
